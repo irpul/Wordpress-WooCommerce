@@ -7,7 +7,7 @@ Version: 2.0
 Author: irpul
 Author URI: http://irpul.ir
 Copyright: 2014 irpul.ir
- */
+*/
 
 add_action('plugins_loaded', 'woocommerce_irpul_init', 0);
 function woocommerce_irpul_init() {
@@ -41,11 +41,11 @@ function woocommerce_irpul_init() {
             add_action('valid-irpul-request', array($this, 'successful_request'));
 			
 			
-            if ( version_compare( WOOCOMMERCE_VERSION, '2.0.0', '>=' ) ) {
-                add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
-             } else {
-                add_action( 'woocommerce_update_options_payment_gateways', array( $this, 'process_admin_options' ) );
-            }
+			if ( version_compare( WOOCOMMERCE_VERSION, '2.0.0', '>=' ) ) {
+				add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
+			} else {
+				add_action( 'woocommerce_update_options_payment_gateways', array( $this, 'process_admin_options' ) );
+			}
 			
             add_action('woocommerce_receipt_irpul', array(&$this, 'receipt_page'));
 			add_action('woocommerce_thankyou_irpul',array($this, 'thankyou_page'));
@@ -96,7 +96,6 @@ function woocommerce_irpul_init() {
             echo '<table class="form-table">';
             $this -> generate_settings_html();
             echo '</table>';
-
         }
 
         function payment_fields(){
@@ -116,7 +115,6 @@ function woocommerce_irpul_init() {
        function check_irpul_response(){
 			global $woocommerce;
 			
-			
 			if( isset($_GET['irpul_token']) ){
 				$irpul_token 	= $_GET['irpul_token'];
 				$decrypted 		= $this->url_decrypt( $irpul_token );
@@ -129,23 +127,20 @@ function woocommerce_irpul_init() {
 					$status 	= $ir_output['status'];
 
 					$order = new WC_Order($order_id);
-					if($status == 'paid')	
-					{
+					if($status == 'paid'){
 						if($order_id != ''){
 							if($order -> status !='completed'){
 								$api=$this -> merchant_id;
 								if($this -> zegersot_p=='toman')	{$amount = round($order -> order_total*10);}else{$amount = round($order -> order_total);}
 								$result = $this ->get($api,$tran_id,$amount);
-								if($result == '1')
-								{
+								if($result == '1'){
 									$this -> msg['message'] = "پرداخت شما با موفقیت انجام شد | مبلغ پرداختی: $amount | شماره تراکنش: $tran_id | شماره سفارش: $order_id | رسید تراکنش: $refcode  <br/> ";
 									$this -> msg['class'] = 'success';
 									$order -> payment_complete();
 									$order -> add_order_note('پرداخت انجام شد<br/>کد پیگیری: '.$tran_id .' AND '.$order_id );
 									$order -> add_order_note($this->msg['message']);
 									$woocommerce -> cart -> empty_cart();
-								}else
-								{
+								}else{
 									$this -> msg['class'] = 'error';
 									$this -> msg['message'] = "پرداخت با موفقيت انجام نشد";
 								}
@@ -302,8 +297,7 @@ function woocommerce_irpul_init() {
 		}
 		
 		private function get($api,$tran_id,$amount){
-			$parameters = array
-			(
+			$parameters = array(
 				'webgate_id'	=> $api,
 				'tran_id' 	=> $tran_id,
 				'amount'	 	=> $amount,
@@ -334,7 +328,6 @@ function woocommerce_irpul_init() {
             }
             return $page_list;
         }
-
     }
 
     function woocommerce_add_irpul_gateway($methods) {
