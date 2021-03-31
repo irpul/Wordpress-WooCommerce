@@ -234,8 +234,8 @@ function woocommerce_irpul_init() {
 	        }
         }
 
-	    function post_data($url,$params,$token) {//used in mellat.php gateway for send to sng.co.ir
-		    ini_set('default_socket_timeout', 15);// برای جلوگیری از تایم اوت شدن در صورت عدم پاسخ وب سرویس
+	    function post_data($url,$params,$token) {
+		    ini_set('default_socket_timeout', 15);
 
 		    $headers = array(
 			    "Authorization: token= {$token}",
@@ -271,9 +271,9 @@ function woocommerce_irpul_init() {
 			    $msg .= "Request was successfull";
 		    }
 		    else{
-			    $status = false;//غیر از 200 هر پاسخی دریافت شود مقدار استاتیوس فالس می شود
+			    $status = false;
 			    if ($http_code == 400) {
-				    $status = true;// در انیاک خطای 400 برای کدهای خطا استفاده میشه
+				    $status = true;
 			    }
 			    elseif ($http_code == 401) {
 				    $msg .= "Invalid access token provided";
