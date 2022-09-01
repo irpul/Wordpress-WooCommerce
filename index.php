@@ -159,23 +159,6 @@ function woocommerce_irpul_init() {
 				$this->msg['message'] = "undefined callback parameters";
 			}
 			
-			if( isset($_GET['irpul_token']) ){
-				$irpul_token 	= $_GET['irpul_token'];
-				$decrypted 		= $this->url_decrypt( $irpul_token );
-				if($decrypted['status']){
-					parse_str($decrypted['data'], $ir_output);
-					
-				}
-				else{
-					$this->msg['class'] = 'error';
-					$this->msg['message'] = "توکن ایرپول صحیح نیست";
-				}
-			}
-			else{
-				$this->msg['class'] = 'error';
-				$this->msg['message'] = "توکن ایرپول موجود نیست";
-			}
-			
 			$redirect_url = ($this->redirect_page_id=="" || $this->redirect_page_id==0)?get_site_url() . "/":get_permalink($this->redirect_page_id);
 			$redirect_url = add_query_arg( array('msg'=> base64_encode($this->msg['message']), 'type'=>$this->msg['class']), $redirect_url );
             wp_redirect( $redirect_url );
