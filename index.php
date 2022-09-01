@@ -91,36 +91,37 @@ function woocommerce_irpul_init() {
        function check_irpul_response(){
 			global $woocommerce;
 			
-			if( isset($_GET['irpul_token']) ){
-				$irpul_token 	= $_GET['irpul_token'];
-				$decrypted 		= $this->url_decrypt( $irpul_token );
-				if($decrypted['status']){
-					parse_str($decrypted['data'], $ir_output);
-					$trans_id 	= $ir_output['trans_id'];
-					$order_id 	= $ir_output['order_id'];
-					$amount 	= $ir_output['amount'];
-					$refcode	= $ir_output['refcode'];
-					$status 	= $ir_output['status'];
+			if( isset($_POST['trans_id']) && isset($_POST['order_id']) && isset($_POST['amount']) && isset($_POST['refcode']) && isset($_POST['status']) ){
+				$trans_id 	= $_POST['trans_id'];
+				$order_id 	= $_POST['order_id'];
+				$amount 	= $_POST['amount'];
+				$refcode	= $_POST['refcode'];
+				$status 	= $_POST['status'];
 
-					$order = new WC_Order($order_id);
-					if($status == 'paid'){
-						if($order_id != ''){
-							if($order->status !='completed'){
+				$order = new WC_Order($order_id);
+				
+				if($status == 'paid'){
+					if($order_id != ''){
+						if($order->status !='completed'){
 
-								if($this->zegersot_p == 'toman'){
-									$amount = round($order->order_total*10);
-								}
-								else{
-									$amount = round($order->order_total);
-								}
+							if($this->zegersot_p == 'toman'){
+								$amount = round($order->order_total*10);
+							}
+							else{
+								$amount = round($order->order_total);
+							}
 
-								$token = $this->token;
-								$result = $this->get($token,$trans_id,$amount);
+							$token = $this->token;
+							$result = $this->get($token,$trans_id,$amount);
 
-								if( isset($result['http_code']) ){
-									$data =  json_decode($result['data'],true);
+							if( isset($result['http_code']) ){
+								$data =  json_decode($result['data'],true);
 
-									if( isset($data['code']) && $data['code'] === 1){
+								if( isset($data['code']) && $data['code'] === 1){
+									$irpul_amount  = $data['amount'];
+
+									if($amount == $irpul_amount){
+										//paid
 										$this->msg['message'] = "پرداخت شما با موفقیت انجام شد | مبلغ پرداختی: $amount | شماره تراکنش: $trans_id | شماره سفارش: $order_id | رسید تراکنش: $refcode  <br/> ";
 										$this->msg['class'] = 'success';
 										$order->payment_complete();
@@ -130,23 +131,40 @@ function woocommerce_irpul_init() {
 									}
 									else{
 										$this->msg['class'] = 'error';
-										$this->msg['message'] = 'Error Code: '.$data['code'] . '\r\n ' . $data['status'];
+										$this->msg['message'] = 'مبلغ تراکنش در ایرپول (' . number_format($irpul_amount) . ' تومان) تومان با مبلغ تراکنش در سیمانت (' . number_format($amount) . ' تومان) برابر نیست';
 									}
-								}else{
-									$this->msg['class'] = 'error';
-									$this->msg['message'] = "پاسخی از سرویس دهنده دریافت نشد. لطفا دوباره تلاش نمائید";
 								}
-
+								else{
+									$this->msg['class'] = 'error';
+									$this->msg['message'] = 'Error Code: '.$data['code'] . '\r\n ' . $data['status'];
+								}
 							}else{
 								$this->msg['class'] = 'error';
-								$this->msg['message'] = "قبلا اين سفارش به ثبت رسيده يا صفارشي موجود نيست!";
+								$this->msg['message'] = "پاسخی از سرویس دهنده دریافت نشد. لطفا دوباره تلاش نمائید";
 							}
+
+						}else{
+							$this->msg['class'] = 'error';
+							$this->msg['message'] = "قبلا اين سفارش به ثبت رسيده يا صفارشي موجود نيست!";
 						}
 					}
-					else{
-						$this->msg['class'] = 'error';
-						$this->msg['message'] = "پرداخت با موفقيت انجام نشد";
-					}
+				}
+				else{
+					$this->msg['class'] = 'error';
+					$this->msg['message'] = "پرداخت با موفقيت انجام نشد";
+				}
+			}
+			else{
+				$this->msg['class'] = 'error';
+				$this->msg['message'] = "undefined callback parameters";
+			}
+			
+			if( isset($_GET['irpul_token']) ){
+				$irpul_token 	= $_GET['irpul_token'];
+				$decrypted 		= $this->url_decrypt( $irpul_token );
+				if($decrypted['status']){
+					parse_str($decrypted['data'], $ir_output);
+					
 				}
 				else{
 					$this->msg['class'] = 'error';
@@ -296,30 +314,7 @@ function woocommerce_irpul_init() {
 		    }
 		    return $res;
 	    }
-
-		public function url_decrypt($string){
-			$counter = 0;
-			$data = str_replace(array('-','_','.'),array('+','/','='),$string);
-			$mod4 = strlen($data) % 4;
-			if ($mod4) {
-			$data .= substr('====', $mod4);
-			}
-			$decrypted = base64_decode($data);
-			
-			$check = array('trans_id','order_id','amount','refcode','status');
-			foreach($check as $str){
-				str_replace($str,'',$decrypted,$count);
-				if($count > 0){
-					$counter++;
-				}
-			}
-			if($counter === 5){
-				return array('data'=>$decrypted , 'status'=>true);
-			}else{
-				return array('data'=>'' , 'status'=>false);
-			}
-		}
-		
+	
 		private function get($token,$trans_id,$amount){
 			$parameters = array(
 				'method' 	    => 'verify',
